@@ -14,6 +14,8 @@ HTTP_PORT = 4000
 HTTP_HOST = '0.0.0.0'
 SOCKET_HOST = "127.0.0.1"
 SOCKET_PORT = 5000
+BASE_DIR = pathlib.Path()
+DATA_JSON = BASE_DIR.joinpath('storage/data.json')
 
 
 class GoitFramework(BaseHTTPRequestHandler):
@@ -61,13 +63,20 @@ class GoitFramework(BaseHTTPRequestHandler):
 
 def save_data_from_form(data):
     data_parse = urllib.parse.unquote(data.decode())
-    print(data_parse)
+
+    if not DATA_JSON.exists():
+        with open('storage/data.json', 'w', encoding='utf-8') as fd:
+            json.dump({}, fd, ensure_ascii=False, indent=4)
     try:
-        data_dict = {key: value for key, value in [el.split('=') for el in data_parse.replace('+', ' ').split('&')]}
-        result_dict = {str(datetime.now()): data_dict}
-        print(result_dict)
-        with open('storage/data.json', 'a', encoding='utf-8') as file:
-            json.dump(result_dict, file, ensure_ascii=False, indent=4)
+        with open('storage/data.json', 'r', encoding='utf-8') as file:
+            data_general = json.load(file)
+
+            data_dict = {key: value for key, value in [el.split('=') for el in data_parse.replace('+', ' ').split('&')]}
+            result_dict = {str(datetime.now()): data_dict}
+            data_general.update(result_dict)
+
+        with open('storage/data.json', 'w', encoding='utf-8') as file:
+            json.dump(data_general, file, ensure_ascii=False, indent=4)
     except ValueError as e:
         logging.error(e)
     except OSError as e:
